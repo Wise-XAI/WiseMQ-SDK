@@ -34,6 +34,7 @@ class MQTTService:
         self._dataset_list = dataset_list
         self._clients = {}
         self.stop = False
+        self.sys_topic = f"{self.username}/$SYS"
 
         self._create_client_depend_on_broker()
         self._register_to_sys()
@@ -56,7 +57,6 @@ class MQTTService:
     def _register_to_sys(self):
         """注册Data的Topic地址"""
         client = list(self._clients.values())[0]
-        sys_topic = f"{self.username}/$SYS"
         register_data = []
         for ds in self._dataset_list:
             for data in ds.data_list:
@@ -75,8 +75,8 @@ class MQTTService:
                     }
                     extra_info_list.append(cur_extra_info)
                 register_data.append([target_data_topic, extra_info_list])
-                
-        client.publish(sys_topic, json.dumps({"data_list": register_data}))
+
+        client.publish(self.sys_topic, json.dumps({"data_list": register_data}))
         logger.info(f"Registered Data number: {len(register_data)}")
 
     def _create_client_depend_on_broker(self):
@@ -100,6 +100,19 @@ class MQTTService:
                 client = self._clients[last_dataset_name]
                 self._clients[dataset_name] = client
 
+    def choose_client(self):
+        return list(self._clients.values())[0]
+
+    def scubscribe_sys(self, call_func):
+        """订阅"""
+        client = self.choose_client()
+        def on_message(client, userdata, msg):
+            # 调用回调函数
+            call_func(msg)
+
+        client.subscribe(self.sys_topic)
+        logger.info("Subscribed $SYS...")
+        client.on_message = on_message
 
     def publish_data(self):
         """
@@ -132,7 +145,7 @@ class MQTTService:
 
             while not self.stop:
                 self.publish_data()
-                time.sleep(1)
+                time.sleep(5)
         except Exception:
             raise
 
@@ -200,10 +213,35 @@ class Session:
                 ds.add(data)
 
 
+    def process_sys_control(self, msg):
+        """控制方法
+        msg: ["status1"]
+        """
+        try:
+            content = json.loads(msg.payload.decode())
+        except:
+            print("Error Format...")
+            return False
+
+        for ds in self.dataset_list:
+            # 智能体
+            for data in ds.data_list:
+                # 判断有无交集，有则说明验证通过
+                if not set(content) & set([ex.name for ex in data.extra_info]):
+                    print("Error Format...")
+                    return False
+                # 调用方法
+                for name in content:
+                    for ex in data.extra_info:
+                        if name == ex.name:
+                            ex.call_func()
+
+
     def run(self):
         self.mqtt_service = MQTTService(self._config_data, self.dataset_list)
-        # self.task_pool.submit(self.mqtt_service.run)
+        # self.task_pool.submit(, self.process_sys_control)
         # 然后将run方法放入线程执行
+        self.mqtt_service.scubscribe_sys(self.process_sys_control)
         logger.info("进入主程序...")
         # self.mqtt_service.run()
         while not self._stop:
