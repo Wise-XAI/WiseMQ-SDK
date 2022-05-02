@@ -34,8 +34,9 @@ class MQTTService:
         self._dataset_list = dataset_list
         self._clients = {}
         self.stop = False
-        self.create_client_depend_on_broker()
-    
+
+        self._create_client_depend_on_broker()
+        self._register_to_sys()
 
     def create_mqtt_client(self, client_id, host, port):
         """创建client"""
@@ -52,8 +53,33 @@ class MQTTService:
         client.loop_start()
         return client
 
+    def _register_to_sys(self):
+        """注册Data的Topic地址"""
+        client = list(self._clients.values())[0]
+        sys_topic = f"{self.username}/$SYS"
+        register_data = []
+        for ds in self._dataset_list:
+            for data in ds.data_list:
+                assert "/" not in data.name, "Data命名不能含有/" 
+                assert len(data.name) <= 50, "Data命名应少于50字符" 
+                # topic
+                target_data_topic = f'{self.username}/{ds.name}/{data.name}'
+                
+                # extra_info
+                extra_info_list = list()
+                for ex in data.extra_info:
+                    cur_extra_info = {
+                        "name": ex.name, 
+                        "type": ex.type,
+                        "value": ex.value
+                    }
+                    extra_info_list.append(cur_extra_info)
+                register_data.append([target_data_topic, extra_info_list])
+                
+        client.publish(sys_topic, json.dumps({"data_list": register_data}))
+        logger.info(f"Registered Data number: {len(register_data)}")
 
-    def create_client_depend_on_broker(self):
+    def _create_client_depend_on_broker(self):
         """根据broker数量床架client数量"""
         broker_info = []
         broker_dataset_map = {}  # 作为映射

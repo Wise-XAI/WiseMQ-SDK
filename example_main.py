@@ -16,7 +16,7 @@ def call_func_for_status_4():
 
 class TData(Data):
     """自动生成data的新topic"""
-    extro_info = (
+    extra_info = (
         SingleExtroInfo("status1", value="test"), 
         SingleExtroInfo("status2", value="only test"), 
         SingleExtroInfo("status3", SingleExtroInfo.SWITCH, value=0, call_func=call_func_for_status_3),

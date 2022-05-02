@@ -31,6 +31,10 @@ class SingleExtroInfo:
     def value(self):
         return self._value
 
+    @property
+    def type(self):
+        return self._type
+
     @value.setter
     def value(self, v):
         assert v == 0 or v == 1 or isinstance(v, str), "value格式错误!" 
