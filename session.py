@@ -199,8 +199,8 @@ class Session:
         :return:
         """
         # 校验控制信息
-        extro_info = data.extro_info
-        for exinfo in extro_info:
+        extra_info = data.extra_info
+        for exinfo in extra_info:
             exinfo.validate()
         
         if len(self.dataset_list) > 1:
@@ -217,24 +217,19 @@ class Session:
         """控制方法
         msg: ["status1"]
         """
-        try:
-            content = json.loads(msg.payload.decode())
-        except:
-            print("Error Format...")
-            return False
-
+        # 传递string
+        content = json.loads(msg.payload.decode())
+        print(content)
         for ds in self.dataset_list:
             # 智能体
             for data in ds.data_list:
-                # 判断有无交集，有则说明验证通过
-                if not set(content) & set([ex.name for ex in data.extra_info]):
-                    print("Error Format...")
-                    return False
-                # 调用方法
-                for name in content:
-                    for ex in data.extra_info:
-                        if name == ex.name:
-                            ex.call_func()
+                # 信息
+                for ex in data.extra_info:
+                    print(ex.name)
+                    if content == ex.name:
+                        print(ex.name)
+                        ex.call_func()
+                        break
 
 
     def run(self):

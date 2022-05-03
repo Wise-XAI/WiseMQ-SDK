@@ -64,7 +64,7 @@ class Data:
         name: 唯一识别符
     """
 
-    extro_info = set()
+    extra_info = set()
 
     def __init__(self, name: str,
                  queue_size: int = 100,

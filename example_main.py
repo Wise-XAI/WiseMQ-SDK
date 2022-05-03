@@ -29,15 +29,11 @@ class TData(Data):
             time.sleep(5)
 
     def iter(self):
+        time.sleep(5)
         return "TESTSSSSSSSSSSSS!!!"
 # 创建
 data1 = TData(name="data1")
 
-# TODO：如何分配data？
-
-# dataset = Dataset()
-# 如果只有一个dataset，那么不用设置分配
-# 如果超过1个dataset，用户需设置data的所属
 data1.set_dataset_id(id="c91452a9a9a4a3970d253bb18f924023")  # 通过dataset.info可读出
 
 session1 = Session()
