@@ -1,7 +1,7 @@
 import time
 
-from session import Session
-from dataset import Dataset, Data, SingleExtroInfo
+from wisemq.client import Session
+from wisemq.client import Data, SingleExtroInfo
 
 
 def call_func_for_status_3():
@@ -29,12 +29,12 @@ class TData(Data):
             time.sleep(5)
 
     def iter(self):
-        time.sleep(5)
+        time.sleep(1)
         return "TESTSSSSSSSSSSSS!!!"
 # 创建
 data1 = TData(name="data1")
 
-data1.set_dataset_id(id="c91452a9a9a4a3970d253bb18f924023")  # 通过dataset.info可读出
+data1.set_dataset_id(id="968722f9da9a42cc8acc0c6c5607755e") 
 
 session1 = Session()
 session1.commit(data1)

@@ -1,11 +1,9 @@
 """
 数据统一格式
-- class DatasetType
 - class Data
 - class Dataset
 """
 import abc
-import enum
 from queue import PriorityQueue
 from typing import List
 
@@ -89,8 +87,8 @@ class Data:
         :return:
         """
         self.step += 1
-        item = self.candidate_queue.get()
-        return item
+        yield self.candidate_queue.get()
+        # return item
 
     def set_dataset_id(self, id):
         self.dataset_id = id

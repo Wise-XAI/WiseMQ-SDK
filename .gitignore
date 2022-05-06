@@ -1,4 +1,4 @@
-wiseai-config.json
+wisemq-config.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -21,6 +21,7 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -41,10 +42,9 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
-.pytest_cache
 nosetests.xml
 coverage.xml
-*,cover
+*.cover
 .hypothesis/
 
 # Translations
@@ -53,6 +53,14 @@ coverage.xml
 
 # Django stuff:
 *.log
+local_settings.py
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
 
 # Sphinx documentation
 docs/_build/
@@ -60,14 +68,42 @@ docs/_build/
 # PyBuilder
 target/
 
-#Ipython Notebook
+# Jupyter Notebook
 .ipynb_checkpoints
 
-# Pyenv
+# pyenv
 .python-version
 
-# Dotenv
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# dotenv
 .env
 
-# Editor swap files
-*.swp
+# virtualenv
+.venv
+venv/
+ENV/
+env3/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+
+# pytest
+.pytest_cache/
+
+# Text Editors
+.vscode/

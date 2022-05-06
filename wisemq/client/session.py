@@ -8,10 +8,8 @@ import json
 from typing import List
 from paho.mqtt import client as mqtt_client
 
-from dataset import Dataset, Data
-
-from utils.config import logger
-import json
+from .dataset import Dataset, Data
+from .utils.config import logger
 
 
 class MQTTService:
@@ -34,10 +32,11 @@ class MQTTService:
         self._dataset_list = dataset_list
         self._clients = {}
         self.stop = False
-        self.sys_topic = f"{self.username}/$SYS"
+        self.sys_topic = f"/{self.username}/$SYS"
 
         self._create_client_depend_on_broker()
         self._register_to_sys()
+
 
     def create_mqtt_client(self, client_id, host, port):
         """创建client"""
@@ -54,6 +53,7 @@ class MQTTService:
         client.loop_start()
         return client
 
+
     def _register_to_sys(self):
         """注册Data的Topic地址"""
         client = list(self._clients.values())[0]
@@ -63,7 +63,7 @@ class MQTTService:
                 assert "/" not in data.name, "Data命名不能含有/" 
                 assert len(data.name) <= 50, "Data命名应少于50字符" 
                 # topic
-                target_data_topic = f'{self.username}/{ds.name}/{data.name}'
+                target_data_topic = f'/{self.username}/{ds.name}/{data.name}'
                 
                 # extra_info
                 extra_info_list = list()
@@ -78,6 +78,7 @@ class MQTTService:
 
         client.publish(self.sys_topic, json.dumps({"data_list": register_data}))
         logger.info(f"Registered Data number: {len(register_data)}")
+
 
     def _create_client_depend_on_broker(self):
         """根据broker数量床架client数量"""
@@ -100,8 +101,10 @@ class MQTTService:
                 client = self._clients[last_dataset_name]
                 self._clients[dataset_name] = client
 
+
     def choose_client(self):
         return list(self._clients.values())[0]
+
 
     def scubscribe_sys(self, call_func):
         """订阅"""
@@ -114,17 +117,18 @@ class MQTTService:
         logger.info("Subscribed $SYS...")
         client.on_message = on_message
 
+
     def publish_data(self):
         """
             根据topic信息进行推送
         :param topic_dict:
         :return:
         """
-        # 生成data的topic地址：Username/dataset/data.name，发布
+        # 生成data的topic地址：/Username/dataset/data.name，发布
         for ds in self._dataset_list:
             cur_client = self._clients[ds.name]
             for data in ds.data_list:
-                target_data_topic = f'{self.username}/{ds.name}/{data.name}'
+                target_data_topic = f'/{self.username}/{ds.name}/{data.name}'
                 content = data.iter()
                 result = cur_client.publish(target_data_topic, str(content))
                 status = result[0]
@@ -133,21 +137,6 @@ class MQTTService:
                 else:
                     logger.info(f"Failed to send message to topic {target_data_topic}")
 
-
-    def run(self):
-        """
-        - 数据持续性推送
-        """
-        try:
-            # 之后改为异步
-            self.create_client_depend_on_broker()
-            self.stop = False
-
-            while not self.stop:
-                self.publish_data()
-                time.sleep(5)
-        except Exception:
-            raise
 
     def close(self):
         self.stop = True
@@ -164,28 +153,30 @@ class Session:
         - run() 推送数据集合
     """
 
-    def __init__(self):
+    def __init__(self, config_path="./wisemq-config.json"):
+        self.config_path = config_path
         self._config_data = self._validate_config()
         self.dataset_list = self._validate_dataset()
 
         self._stop = False
-        self.task_pool = ThreadPoolExecutor(3)
+        self.task_pool = ThreadPoolExecutor(5)
+
 
     def _validate_config(self):
         """读取配置文件"""
-        file_path = "./wiseai-config.json"
-        with open(file_path, 'r') as f:
+        with open(self.config_path, 'r') as f:
             context = f.read()
         try:
             data = json.loads(context)
             return data
         except:
-            raise json.JSONDecodeError("请重新下载wiseai-config.json文件")
+            raise json.JSONDecodeError("请重新下载wisemq-config.json文件")
+
 
     def _validate_dataset(self):
         """校验dataset并添加到列表中"""
         dataset = self._config_data.get("dataset")
-        assert dataset, "请重新下载wiseai-config.json文件"
+        assert dataset, "请重新下载wisemq-config.json文件"
         dataset_list = list()
         for ds in dataset:
             dataset = Dataset(name=ds["name"], broker=(ds["broker"]["host"], ds["broker"]["port"]))
@@ -206,8 +197,12 @@ class Session:
         if len(self.dataset_list) > 1:
             # 验证data名称定义
             assert data.dataset_id, f"请设置{data.name}所属的数据集合"
+        elif len(self.dataset_list) == 0:
+            raise ValueError("数据集合不存在，请向管理员进行申请")
+        # 匹配并添加数据智能体到数据集合,校验用户所设置的dataset是否存在
+        if data.dataset_id not in [ds.name for ds in self.dataset_list]:
+            raise KeyError(f'{data.name}的数据集合ID不存在，请确认配置文件信息是否匹配')
 
-        # 匹配并添加数据智能体到数据集合
         for ds in self.dataset_list: 
             if ds.name == data.dataset_id:
                 ds.add(data)
@@ -219,13 +214,11 @@ class Session:
         """
         # 传递string
         content = json.loads(msg.payload.decode())
-        print(content)
         for ds in self.dataset_list:
             # 智能体
             for data in ds.data_list:
                 # 信息
                 for ex in data.extra_info:
-                    print(ex.name)
                     if content == ex.name:
                         print(ex.name)
                         ex.call_func()
@@ -239,9 +232,10 @@ class Session:
         self.mqtt_service.scubscribe_sys(self.process_sys_control)
         logger.info("进入主程序...")
         # self.mqtt_service.run()
+
         while not self._stop:
-            time.sleep(1)
             self.mqtt_service.publish_data()
+
 
     def close(self):
         self._stop = True
