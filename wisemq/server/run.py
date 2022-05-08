@@ -25,7 +25,6 @@ class WiseMQInterface:
         headers = {"ApplicationKey": self.APIKEY}
         return headers
 
-
     def _make_request(self, url, method, data=None):
         """Function to make request to WiseMQ interface
 
@@ -49,7 +48,6 @@ class WiseMQInterface:
             raise
         return response.json()
 
-
     def _return_url_per_environment(self, url):
         """Function to get the URL for API
 
@@ -63,13 +61,11 @@ class WiseMQInterface:
         url = "{0}{1}".format(base_url, url)
         return url
 
-
     def _general_get_request(self, url):
         """General GET request to url."""
         url = self.return_url_per_environment(url)
         response = self._make_request(url, "GET")
         return response
-
 
     def create_wisemq_user(self, data):
         """
@@ -85,10 +81,9 @@ class WiseMQInterface:
         response = self._make_request(url, "post", data=data)
         return response
 
-
     def get_client_config_file(self, user_token):
         """Get User Config FILE
-        
+
         Args:
             user_token: Token when created MQTT User.
         Returns:
@@ -96,7 +91,6 @@ class WiseMQInterface:
         """
         url = URLS.get_client_config_file.value.format(token=user_token)
         return self._general_get_request(url)
-
 
     def create_dataset(self, user_token):
         """Create Dataset for a user
@@ -110,7 +104,6 @@ class WiseMQInterface:
         url = URLS.create_dataset.value.format(token=user_token)
         return self._general_get_request(url)
 
-
     def get_dataset_list(self, user_token):
         """Get Dataset List for a user
 
@@ -122,11 +115,10 @@ class WiseMQInterface:
         """
         url = URLS.get_dataset_list.value.format(token=user_token)
         return self._general_get_request(url)
-    
 
     def get_dataset_info(self, user_token, dataset_pk):
         """Get Single Dataset Information included data list in it.
-        
+
         Args:
             user_token: Token when created MQTT User.
         Returns:
@@ -135,10 +127,9 @@ class WiseMQInterface:
         url = URLS.get_dataset_list.value.format(token=user_token, dataset_pk=dataset_pk)
         return self._general_get_request(url)
 
-
     def get_data_info(self, user_token, data_pk):
         """Get Single Data Information.
-        
+
         Args:
             user_token: Token when created MQTT User.
             data_pk: Data model primary key.
@@ -148,7 +139,6 @@ class WiseMQInterface:
         url = URLS.get_data_info.value.format(token=user_token, data_pk=data_pk)
         return self._general_get_request(url)
 
-
     def get_messages(self, user_token, data_pk):
         """Get MQTT message in Data
 
@@ -157,11 +147,10 @@ class WiseMQInterface:
             data_pk: Data model primary key.
         Returns:
             200, message list.
-        
+
         """
         url = URLS.get_messages.value.format(token=user_token, data_pk=data_pk)
         return self._general_get_request(url)
-
 
     def update_command(self, user_token, data_pk):
         """Command that control corresponding client session. 
@@ -171,7 +160,7 @@ class WiseMQInterface:
             data_pk: Data model primary key.
         Returns:
             200, updated extra information
-        
+
         """
         url = URLS.update_command.value.format(token=user_token, data_pk=data_pk)
         url = self.return_url_per_environment(url)
