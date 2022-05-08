@@ -119,23 +119,25 @@ class MQTTService:
 
 
     def publish_data(self):
-        """
-            根据topic信息进行推送
-        :param topic_dict:
+        """根据topic信息进行推送
+
         :return:
         """
-        # 生成data的topic地址：/Username/dataset/data.name，发布
+            
         for ds in self._dataset_list:
             cur_client = self._clients[ds.name]
             for data in ds.data_list:
-                target_data_topic = f'/{self.username}/{ds.name}/{data.name}'
                 content = data.iter()
-                result = cur_client.publish(target_data_topic, str(content))
-                status = result[0]
-                if status == 0:
-                    logger.info(f"Published {content} to Topic:{target_data_topic}")
-                else:
-                    logger.info(f"Failed to send message to topic {target_data_topic}")
+                # 有内容再上传
+                if content:
+                    # 生成data的topic地址：/Username/dataset/data.name，发布
+                    target_data_topic = f'/{self.username}/{ds.name}/{data.name}'
+                    result = cur_client.publish(target_data_topic, str(content))
+                    status = result[0]
+                    if status == 0:
+                        logger.info(f"Published {content} to Topic:{target_data_topic}")
+                    else:
+                        logger.info(f"Failed to send message to topic {target_data_topic}")
 
 
     def close(self):
@@ -225,13 +227,20 @@ class Session:
                         break
 
 
+    def _start_data_capture(self):
+        """Start function capture in all Data."""
+        for ds in self.dataset_list:
+            for data in ds.data_list:
+                self.task_pool.submit(data.capture_data)
+
     def run(self):
+        logger.info("进入主程序...")
         self.mqtt_service = MQTTService(self._config_data, self.dataset_list)
         # self.task_pool.submit(, self.process_sys_control)
-        # 然后将run方法放入线程执行
         self.mqtt_service.scubscribe_sys(self.process_sys_control)
-        logger.info("进入主程序...")
-        # self.mqtt_service.run()
+        logger.info("开启数据捕获...")
+        self._start_data_capture()
+        logger.info("开始上传数据...")
 
         while not self._stop:
             self.mqtt_service.publish_data()

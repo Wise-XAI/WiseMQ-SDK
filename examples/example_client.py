@@ -28,14 +28,14 @@ class TData(Data):
             self.candidate_queue.put(r"TESTSSSSSSSSSSSS!!!")
             time.sleep(5)
 
-    def iter(self):
-        time.sleep(1)
-        return "TESTSSSSSSSSSSSS!!!"
 # 创建
 data1 = TData(name="data1")
+data2 = TData(name="data2")
 
 data1.set_dataset_id(id="968722f9da9a42cc8acc0c6c5607755e") 
+data2.set_dataset_id(id="968722f9da9a42cc8acc0c6c5607755e") 
 
 session1 = Session()
 session1.commit(data1)
+session1.commit(data2)
 session1.run()

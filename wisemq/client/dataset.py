@@ -4,7 +4,7 @@
 - class Dataset
 """
 import abc
-from queue import PriorityQueue
+from queue import PriorityQueue, Empty
 from typing import List
 
 
@@ -82,15 +82,19 @@ class Data:
         # self.candidate_queue.put()
 
     def iter(self):
-        """
-            上传数据：session运行的时候会调用此方法来获取所需上传数据
-        :return:
+        """获取数据
+
+        :return: Item or False
         """
         self.step += 1
-        yield self.candidate_queue.get()
-        # return item
+        try:
+            item = self.candidate_queue.get_nowait()
+            return item
+        except Empty:
+            return False
 
     def set_dataset_id(self, id):
+        """设置Data所属的Dataset"""
         self.dataset_id = id
 
 
