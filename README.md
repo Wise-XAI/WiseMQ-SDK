@@ -7,13 +7,13 @@
 
 <p align="center">
     <a href="https://github.com/Wise-XAI/WiseMQ-SDK/commits/main">
-    <img src="https://img.shields.io/github/last-commit/ArmynC/ArminC-AutoExec.svg?style=flat-square&logo=github&logoColor=white"
+    <img src="https://img.shields.io/github/last-commit/Wise-XAI/WiseMQ-SDK.svg?style=flat-square&logo=github&logoColor=white"
          alt="GitHub last commit">
     <a href="https://github.com/Wise-XAI/WiseMQ-SDK/issues">
-    <img src="https://img.shields.io/github/issues-raw/ArmynC/ArminC-AutoExec.svg?style=flat-square&logo=github&logoColor=white"
+    <img src="https://img.shields.io/github/issues-raw/Wise-XAI/WiseMQ-SDK.svg?style=flat-square&logo=github&logoColor=white"
          alt="GitHub issues">
     <a href="https://github.com/Wise-XAI/WiseMQ-SDK/pulls">
-    <img src="https://img.shields.io/github/issues-pr-raw/ArmynC/ArminC-AutoExec.svg?style=flat-square&logo=github&logoColor=white"
+    <img src="https://img.shields.io/github/issues-pr-raw/Wise-XAI/WiseMQ-SDK.svg?style=flat-square&logo=github&logoColor=white"
          alt="GitHub pull requests">
 </p>
       
