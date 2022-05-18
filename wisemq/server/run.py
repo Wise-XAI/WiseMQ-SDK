@@ -116,7 +116,7 @@ class WiseMQInterface:
         url = URLS.get_user_info.value.format(token=user_token)
         return self._general_get_request(url)
 
-    def create_dataset(self, user_token, data):
+    def create_data_agent(self, user_token, data):
         """Create Dataset for a user
 
         Args:
@@ -127,12 +127,12 @@ class WiseMQInterface:
             200, created dataset infomation.
 
         """
-        url = URLS.create_dataset.value.format(token=user_token)
+        url = URLS.create_data_agent.value.format(token=user_token)
         url = self._return_url_per_environment(url)
         response = self._make_request(url, "post", data=data)
         return response
 
-    def get_dataset_list(self, user_token):
+    def get_data_agent_list(self, user_token):
         """Get Dataset List for a user
 
         Args:
@@ -141,21 +141,10 @@ class WiseMQInterface:
             200, dataset list.
 
         """
-        url = URLS.get_dataset_list.value.format(token=user_token)
+        url = URLS.get_data_agent_list.value.format(token=user_token)
         return self._general_get_request(url)
 
-    def get_dataset_info(self, user_token, dataset_pk):
-        """Get Single Dataset Information included data list in it.
-
-        Args:
-            user_token: Token when created MQTT User.
-        Returns:
-            200, dataset info.
-        """
-        url = URLS.get_dataset_list.value.format(token=user_token, dataset_pk=dataset_pk)
-        return self._general_get_request(url)
-
-    def get_data_info(self, user_token, data_pk):
+    def get_data_agent_info(self, user_token, data_pk):
         """Get Single Data Information.
 
         Args:
@@ -164,7 +153,7 @@ class WiseMQInterface:
         Returns:
             200, dataset info.
         """
-        url = URLS.get_data_info.value.format(token=user_token, data_pk=data_pk)
+        url = URLS.get_data_agent_info.value.format(token=user_token, data_pk=data_pk)
         return self._general_get_request(url)
 
     def get_messages(self, user_token, data_pk):

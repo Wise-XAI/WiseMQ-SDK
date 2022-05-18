@@ -96,7 +96,7 @@ class MQTTService:
             if content:
                 # 生成data的topic地址：/Username/dataset/data.name，发布
                 target_data_topic = self._generate_topic_name(data.id)
-                result = cur_client.publish(target_data_topic, str(content))
+                result = cur_client.publish(target_data_topic, json.dumps(content))
                 status = result[0]
                 if status == 0:
                     logger.info(f"Published {content} to Topic:{target_data_topic}")
