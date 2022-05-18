@@ -25,17 +25,19 @@ class TData(Data):
 
     def capture_data(self):
         while True:
-            self.candidate_queue.put(r"TESTSSSSSSSSSSSS!!!")
-            time.sleep(5)
+            data = {
+                "name": "test",
+                "data1": "111111",
+                "data2": "NOT BAD",
+            }
+            self.candidate_queue.put(data)
+            time.sleep(0.5)  # 0.5s获取数据
 
 # 创建
-data1 = TData(name="data1")
-data2 = TData(name="data2")
+data1 = TData()
+data2 = TData()
 
-data1.set_dataset_id(id="968722f9da9a42cc8acc0c6c5607755e") 
-data2.set_dataset_id(id="968722f9da9a42cc8acc0c6c5607755e") 
-
-session1 = Session()
+session1 = Session("/home/dongbox/work/wisemq_sdk/wisemq-config.json")
 session1.commit(data1)
 session1.commit(data2)
 session1.run()

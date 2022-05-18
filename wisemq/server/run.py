@@ -44,7 +44,6 @@ class WiseMQInterface:
             response.raise_for_status()
         except requests.exceptions.RequestException:
             logger.info("The server isn't able establish connection with WiseMQ")
-            logger.info(f"Error Message: {response.json()}")
             raise
         return response.json()
 
@@ -63,7 +62,7 @@ class WiseMQInterface:
 
     def _general_get_request(self, url):
         """General GET request to url."""
-        url = self.return_url_per_environment(url)
+        url = self._return_url_per_environment(url)
         response = self._make_request(url, "GET")
         return response
 
@@ -71,13 +70,16 @@ class WiseMQInterface:
         """
         Args:
             data ([dict]): User Data to be created
+            data: {
+                "user_token": "APIKEY"
+            }
             The necessary key is `user_token`
 
         Returns:
             [JSON]: JSON response data
         """
         url = URLS.create_wisemq_user.value
-        url = self.return_url_per_environment(url)
+        url = self._return_url_per_environment(url)
         response = self._make_request(url, "post", data=data)
         return response
 
@@ -90,19 +92,45 @@ class WiseMQInterface:
             File Download
         """
         url = URLS.get_client_config_file.value.format(token=user_token)
+        url = self._return_url_per_environment(url)
+
+        headers = self._get_request_headers()
+        try:
+            response = requests.request(
+                method="GET", url=url, headers=headers
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.info("The server isn't able establish connection with WiseMQ")
+            raise
+        return response
+
+    def get_user_info(self, user_token):
+        """Get User Info
+
+        Args:
+            user_token: Token when created MQTT User.
+        Returns:
+            User Information
+        """
+        url = URLS.get_user_info.value.format(token=user_token)
         return self._general_get_request(url)
 
-    def create_dataset(self, user_token):
+    def create_dataset(self, user_token, data):
         """Create Dataset for a user
 
         Args:
             user_token: Token when created MQTT User.
+            data: 
+                {"number_of_dataset": 1}
         Returns:
             200, created dataset infomation.
 
         """
         url = URLS.create_dataset.value.format(token=user_token)
-        return self._general_get_request(url)
+        url = self._return_url_per_environment(url)
+        response = self._make_request(url, "post", data=data)
+        return response
 
     def get_dataset_list(self, user_token):
         """Get Dataset List for a user
@@ -163,6 +191,6 @@ class WiseMQInterface:
 
         """
         url = URLS.update_command.value.format(token=user_token, data_pk=data_pk)
-        url = self.return_url_per_environment(url)
+        url = self._return_url_per_environment(url)
         response = self._make_request(url, "PATCH")
         return response

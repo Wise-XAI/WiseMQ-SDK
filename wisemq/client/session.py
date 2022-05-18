@@ -73,15 +73,12 @@ class MQTTService:
                 target_data_topic = self._generate_topic_name(ds.name, data.name)
 
                 # extra_info
-                extra_info_list = list()
+                extra_info_dict = dict()
                 for ex in data.extra_info:
-                    cur_extra_info = {
-                        "name": ex.name,
-                        "type": ex.type,
-                        "value": ex.value
-                    }
-                    extra_info_list.append(cur_extra_info)
-                register_data.append([target_data_topic, extra_info_list])
+                    if ex.name in extra_info_dict:
+                        raise KeyError(f"{ex.name} has existed before, change it.")
+                    extra_info_dict[ex.name] = (ex.type, ex.value)  # name: (type, value) 
+                register_data.append([target_data_topic, extra_info_dict])
 
         msg = json.dumps({"data_list": register_data})
         client.publish(self.sys_topic, msg)
