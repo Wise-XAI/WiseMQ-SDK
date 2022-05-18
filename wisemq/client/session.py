@@ -8,12 +8,12 @@ import json
 from typing import List, Dict
 from paho.mqtt import client as mqtt_client
 
-from .dataset import Dataset, Data
-from .utils.config import logger
+from .agent import Data
+from .config import logger
 
 
 class MQTTService:
-    def __init__(self, config_data: Dict, dataset_list: List[Dataset]):
+    def __init__(self, config_data: Dict, dataset: List[Data]):
         """传入broker_info与根据data_list来进行上传
 
         Args:
@@ -30,13 +30,13 @@ class MQTTService:
         self.password = user.get("password")
         assert self.username or self.password, "请重新下载wiseai-config.json文件"
 
-        self._dataset_list = dataset_list
+        self._dataset = dataset
         self._clients = {}
         self.stop = False
         self.sys_topic = f"/{self.username}/$SYS"
 
         self._create_client_depend_on_broker()
-        self._register_to_sys()
+        # self._register_to_sys()
 
     def create_mqtt_client(self, client_id: str, host: str, port: str):
         """创建client"""
@@ -53,70 +53,35 @@ class MQTTService:
         client.loop_start()
         return client
 
-    def _generate_topic_name(self, dataset_name: str, data_name: str):
+    def _generate_topic_name(self, data_name: str):
         """生成主题名字"""
-        return f'/{self.username}/{dataset_name}/{data_name}'
+        return f'/{self.username}/{data_name}'
 
     def _choose_client(self):
         """默认选择第一个为订阅所使用的client"""
         return list(self._clients.values())[0]
 
-    def _register_to_sys(self):
-        """注册Data的Topic地址"""
-        client = self._choose_client()
-        register_data = []
-        for ds in self._dataset_list:
-            for data in ds.data_list:
-                assert "/" not in data.name, "Data命名不能含有/"
-                assert len(data.name) <= 50, "Data命名应少于50字符"
-                # topic
-                target_data_topic = self._generate_topic_name(ds.name, data.name)
-
-                # extra_info
-                extra_info_dict = dict()
-                for ex in data.extra_info:
-                    if ex.name in extra_info_dict:
-                        raise KeyError(f"{ex.name} has existed before, change it.")
-                    extra_info_dict[ex.name] = (ex.type, ex.value)  # name: (type, value) 
-                register_data.append([target_data_topic, extra_info_dict])
-
-        msg = json.dumps({"data_list": register_data})
-        client.publish(self.sys_topic, msg)
-        logger.info(f"Registered Data number: {len(register_data)}")
-
     def _create_client_depend_on_broker(self):
         """根据broker数量创建client数量"""
         broker_info = []
         broker_dataset_map = {}  # 作为映射
-        for index, ds in enumerate(self._dataset_list):
-            dataset_name = ds.name
+        for index, data in enumerate(self._dataset):
+            data_id = data.id
             # 存在不一样的broker则创建
-            if ds.broker not in broker_info:
-                broker_info.append(ds.broker)
+            if data.broker not in broker_info:
+                broker_info.append(data.broker)
                 # 创建client
                 client = self.create_mqtt_client(
-                    f'Client_{self.username}_{index}', host=ds.broker[0], port=ds.broker[1])
+                    f'Client_{self.username}_{index}', host=data.broker[0], port=data.broker[1])
                 # 以index作为key来识别
-                self._clients[dataset_name] = client
+                self._clients[data_id] = client
 
-                broker_dataset_map[str(broker_info)] = dataset_name
+                broker_dataset_map[str(broker_info)] = data_id
             else:
                 last_dataset_name = broker_dataset_map[str(broker_info)]
                 # 存在同样的broker则赋值
                 client = self._clients[last_dataset_name]
-                self._clients[dataset_name] = client
-
-    def scubscribe_sys(self, call_func):
-        """订阅"""
-        client = self._choose_client()
-
-        def on_message(client, userdata, msg):
-            # 调用回调函数
-            call_func(msg)
-
-        client.on_message = on_message
-        client.subscribe(self.sys_topic)
-        logger.info("Subscribed $SYS...")
+                self._clients[data_id] = client
 
     def publish_data(self):
         """根据topic信息进行推送
@@ -124,20 +89,19 @@ class MQTTService:
         :return:
         """
 
-        for ds in self._dataset_list:
-            cur_client = self._clients[ds.name]
-            for data in ds.data_list:
-                content = data.iter()
-                # 有内容再上传
-                if content:
-                    # 生成data的topic地址：/Username/dataset/data.name，发布
-                    target_data_topic = self._generate_topic_name(ds.name, data.name)
-                    result = cur_client.publish(target_data_topic, str(content))
-                    status = result[0]
-                    if status == 0:
-                        logger.info(f"Published {content} to Topic:{target_data_topic}")
-                    else:
-                        logger.info(f"Failed to send message to topic {target_data_topic}")
+        for data in self._dataset:
+            cur_client = self._clients[data.id]
+            content = data.iter()
+            # 有内容再上传
+            if content:
+                # 生成data的topic地址：/Username/dataset/data.name，发布
+                target_data_topic = self._generate_topic_name(data.id)
+                result = cur_client.publish(target_data_topic, str(content))
+                status = result[0]
+                if status == 0:
+                    logger.info(f"Published {content} to Topic:{target_data_topic}")
+                else:
+                    logger.info(f"Failed to send message to topic {target_data_topic}")
 
     def close(self):
         self.stop = True
@@ -155,9 +119,11 @@ class Session:
 
     def __init__(self, config_path: str = "./wisemq-config.json"):
         self.config_path = config_path
+        # 配置文件
         self._config_data = self._validate_config()
-        self.dataset_list = self._validate_dataset()
-
+        # dataset
+        self.brokers = self._validate_broker()
+        self.dataset = list()
         self._stop = False
         self.task_pool = ThreadPoolExecutor(5)
 
@@ -171,15 +137,15 @@ class Session:
         except:
             raise json.JSONDecodeError("请重新下载wisemq-config.json文件")
 
-    def _validate_dataset(self):
+    def _validate_broker(self):
         """校验dataset并添加到列表中"""
         dataset = self._config_data.get("dataset")
         assert dataset, "请重新下载wisemq-config.json文件"
-        dataset_list = list()
+        data_dict = dict()
+
         for ds in dataset:
-            dataset = Dataset(name=ds["name"], broker=(ds["broker"]["host"], ds["broker"]["port"]))
-            dataset_list.append(dataset)
-        return dataset_list
+            data_dict[ds["name"]] = (ds["broker"]["host"], ds["broker"]["port"])
+        return data_dict
 
     def commit(self, data: Data):
         """
@@ -190,19 +156,16 @@ class Session:
         extra_info = data.extra_info
         for exinfo in extra_info:
             exinfo.validate()
+        # 1. 校验data的ID是否存在
+        data_id = data.id
+        if data_id not in self.brokers:
+            raise KeyError(f"数据智能体 {data_id} 不存在")
+        
+        # 2. 添加broker信息
+        data.broker = self.brokers[data_id]
+        # 3. 添加进列表
+        self.dataset.append(data)
 
-        if len(self.dataset_list) > 1:
-            # 验证data名称定义
-            assert data.dataset_id, f"请设置{data.name}所属的数据集合"
-        elif len(self.dataset_list) == 0:
-            raise ValueError("数据集合不存在，请向管理员进行申请")
-        # 匹配并添加数据智能体到数据集合,校验用户所设置的dataset是否存在
-        if data.dataset_id not in [ds.name for ds in self.dataset_list]:
-            raise KeyError(f'{data.name}的数据集合ID不存在，请确认配置文件信息是否匹配')
-
-        for ds in self.dataset_list:
-            if ds.name == data.dataset_id:
-                ds.add(data)
 
     def process_sys_control(self, msg):
         """控制方法
@@ -212,25 +175,23 @@ class Session:
         """
         # 传递string
         content = json.loads(msg.payload.decode())
-        for ds in self.dataset_list:
+        for data in self.dataset:
             # 智能体
-            for data in ds.data_list:
-                # 信息
-                for ex in data.extra_info:
-                    if content == ex.name:
-                        ex.call_func()
-                        break
+            # 信息
+            for ex in data.extra_info:
+                if content == ex.name:
+                    ex.call_func()
+                    break
 
     def _start_data_capture(self):
         """Start function capture in all Data."""
-        for ds in self.dataset_list:
-            for data in ds.data_list:
-                self.task_pool.submit(data.capture_data)
+        for data in self.dataset:
+            self.task_pool.submit(data.capture_data)
 
     def run(self):
         logger.info("进入主程序...")
-        self.mqtt_service = MQTTService(self._config_data, self.dataset_list)
-        self.mqtt_service.scubscribe_sys(self.process_sys_control)
+        self.mqtt_service = MQTTService(self._config_data, self.dataset)
+        # self.mqtt_service.scubscribe_sys(self.process_sys_control)
         logger.info("开启数据捕获...")
         self._start_data_capture()
         logger.info("开始上传数据...")

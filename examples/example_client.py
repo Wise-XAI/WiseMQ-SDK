@@ -34,8 +34,8 @@ class TData(Data):
             time.sleep(0.5)  # 0.5s获取数据
 
 # 创建
-data1 = TData()
-data2 = TData()
+data1 = TData(id="45448b3d5fa34aab9711ac806ed131f0")
+data2 = TData(id="fa2052d7c67f48958977e65b1bca1770")
 
 session1 = Session("/home/dongbox/work/wisemq_sdk/wisemq-config.json")
 session1.commit(data1)
