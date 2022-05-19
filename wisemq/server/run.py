@@ -169,17 +169,18 @@ class WiseMQInterface:
         url = URLS.get_messages.value.format(token=user_token, data_pk=data_pk)
         return self._general_get_request(url)
 
-    def update_command(self, user_token, data_pk):
+    def update_status(self, user_token, data_pk, data):
         """Command that control corresponding client session. 
 
         Args:
-            user_token: Token when created MQTT User.
-            data_pk: Data model primary key.
+            - user_token: Token when created MQTT User.
+            - data_pk: Data model primary key.
+            - data: status name, which the type is switch.
         Returns:
             200, updated extra information
 
         """
-        url = URLS.update_command.value.format(token=user_token, data_pk=data_pk)
+        url = URLS.update_status.value.format(token=user_token, data_pk=data_pk)
         url = self._return_url_per_environment(url)
-        response = self._make_request(url, "PATCH")
+        response = self._make_request(url, "PATCH", data=data)
         return response
