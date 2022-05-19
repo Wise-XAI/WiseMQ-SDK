@@ -1,7 +1,7 @@
 import time
 
 from wisemq.client import Session
-from wisemq.client import Data, SingleExtroInfo
+from wisemq.client import Data, Status
 
 
 def call_func_for_status_3():
@@ -15,13 +15,13 @@ def call_func_for_status_4():
 
 
 class TData(Data):
-    """自动生成data的新topic"""
-    extra_info = (
-        SingleExtroInfo("status1", value="test"), 
-        SingleExtroInfo("status2", value="only test"), 
-        SingleExtroInfo("status3", SingleExtroInfo.SWITCH, value=0, call_func=call_func_for_status_3),
-        SingleExtroInfo("status4", SingleExtroInfo.SWITCH, value=1, call_func=call_func_for_status_4),
-        )
+    # 初始化状态参数
+    statuses = {
+        "status1": Status(value="test"), 
+        "status2": Status(value="only test"), 
+        "status3": Status(Status.SWITCH, value=0, call_func=call_func_for_status_3), 
+        "status4": Status(Status.SWITCH, value=1, call_func=call_func_for_status_4), 
+    }
 
     def capture_data(self):
         while True:
@@ -31,7 +31,7 @@ class TData(Data):
                 "data2": "NOT BAD",
             }
             self.candidate_queue.put(data)
-            time.sleep(0.5)  # 0.5s获取数据
+            time.sleep(5)  # 0.5s获取数据
 
 # 创建
 data1 = TData(id="0f6b3865372a466ba05ccf068fb1cdfa")

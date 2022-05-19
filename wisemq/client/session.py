@@ -8,7 +8,7 @@ import json
 from typing import List, Dict
 from paho.mqtt import client as mqtt_client
 
-from .agent import Data
+from .agent import Data, Status
 from .config import logger
 
 
@@ -53,9 +53,25 @@ class MQTTService:
         client.loop_start()
         return client
 
-    def _generate_topic_name(self, data_name: str):
+    def scubscribe_sys(self, call_func):
+        """订阅"""
+        client = self._choose_client()
+
+        def on_message(client, userdata, msg):
+            # 调用回调函数
+            call_func(msg)
+
+        client.on_message = on_message
+        client.subscribe(self.sys_topic)
+        logger.info("Subscribed $SYS...")
+
+    def _generate_data_topic_name(self, data_name: str):
         """生成主题名字"""
         return f'/{self.username}/{data_name}'
+
+    def _generate_data_sys_name(self, data_name: str):
+        """生成Data的控制主题"""
+        return f'/{self.username}/{data_name}/$SYS'
 
     def _choose_client(self):
         """默认选择第一个为订阅所使用的client"""
@@ -94,14 +110,24 @@ class MQTTService:
             content = data.iter()
             # 有内容再上传
             if content:
-                # 生成data的topic地址：/Username/dataset/data.name，发布
-                target_data_topic = self._generate_topic_name(data.id)
+                # 生成data的topic地址：/Username/data.name，发布
+                target_data_topic = self._generate_data_topic_name(data.id)
                 result = cur_client.publish(target_data_topic, json.dumps(content))
                 status = result[0]
                 if status == 0:
-                    logger.info(f"Published {content} to Topic:{target_data_topic}")
+                    logger.info(f"Published {data.id}' content to Topic:{target_data_topic}")
                 else:
                     logger.info(f"Failed to send message to topic {target_data_topic}")
+
+                # 上传状态
+                statuses = data.get_status_serailize()
+                target_data_sys_topic = self._generate_data_sys_name(data.id)
+                result = cur_client.publish(target_data_sys_topic, json.dumps(statuses))
+                status = result[0]
+                if status == 0:
+                    logger.info(f"Published {data.id}' status to Topic:{target_data_sys_topic}")
+                else:
+                    logger.info(f"Failed to send message to topic {target_data_sys_topic}")
 
     def close(self):
         self.stop = True
@@ -123,7 +149,7 @@ class Session:
         self._config_data = self._validate_config()
         # dataset
         self.brokers = self._validate_broker()
-        self.dataset = list()
+        self.dataset: List[Data] = list()
         self._stop = False
         self.task_pool = ThreadPoolExecutor(5)
 
@@ -153,19 +179,17 @@ class Session:
         :return:
         """
         # 校验控制信息
-        extra_info = data.extra_info
-        for exinfo in extra_info:
-            exinfo.validate()
+        for _, status_obj in data.statuses.items():
+            status_obj.validate()
         # 1. 校验data的ID是否存在
         data_id = data.id
         if data_id not in self.brokers:
             raise KeyError(f"数据智能体 {data_id} 不存在")
-        
+
         # 2. 添加broker信息
         data.broker = self.brokers[data_id]
         # 3. 添加进列表
         self.dataset.append(data)
-
 
     def process_sys_control(self, msg):
         """控制方法
@@ -174,14 +198,25 @@ class Session:
 
         """
         # 传递string
-        content = json.loads(msg.payload.decode())
-        for data in self.dataset:
-            # 智能体
-            # 信息
-            for ex in data.extra_info:
-                if content == ex.name:
-                    ex.call_func()
-                    break
+        # ({data_id}, {status_name})
+        try:
+            update_status = json.loads(msg.payload.decode())
+            for data_id, update_status_name in update_status.items():
+                for data in self.dataset:
+                    # 只能对SWITCH产生作用
+                    if data.id != data_id:
+                        continue
+                    # 更新状态
+                    for status_name, status_obj in data.statuses.items():
+                        # 查询
+                        if update_status_name == status_name and status_obj.type == Status.SWITCH:
+                            # 切换
+                            status_obj.value = 0 if status_obj.value else 1
+                            # 调用回调函数
+                            status_obj.call_func()
+                            break
+        except:
+            raise
 
     def _start_data_capture(self):
         """Start function capture in all Data."""
@@ -191,7 +226,8 @@ class Session:
     def run(self):
         logger.info("进入主程序...")
         self.mqtt_service = MQTTService(self._config_data, self.dataset)
-        # self.mqtt_service.scubscribe_sys(self.process_sys_control)
+        # 订阅获取控制信息
+        self.mqtt_service.scubscribe_sys(self.process_sys_control)
         logger.info("开启数据捕获...")
         self._start_data_capture()
         logger.info("开始上传数据...")
