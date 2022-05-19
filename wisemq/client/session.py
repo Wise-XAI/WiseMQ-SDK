@@ -104,7 +104,6 @@ class MQTTService:
 
         :return:
         """
-
         for data in self._dataset:
             cur_client = self._clients[data.id]
             content = data.iter()

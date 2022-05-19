@@ -35,11 +35,11 @@ class Status:
     @value.setter
     def value(self, v):
         # 开关类型
-        if self._type == self.SWITCH:
-            assert v == 0 or v == 1
+        if self._type == self.SWITCH and not (v == 0 or v == 1):
+            raise ValueError("value格式错误!, 程序中止！！！")
         # 显示类型
-        if self._type == self.ONLY_SHOW:
-            assert isinstance(v, str), "value格式错误!" 
+        if self._type == self.ONLY_SHOW and not isinstance(v, str):
+            raise ValueError("value格式错误!, 程序中止！！！")
         self._value = v
 
     @property
@@ -114,9 +114,10 @@ class Data:
             - value: 更新的值
         """
         for status_name, status_obj in self.statuses.items():
-            if name == status_name and status_obj.type == Status.SWITCH:
+            if name == status_name:
                 status_obj.value = value
-                return 
+                return True
+
         raise KeyError(f"Status {name} 不存在")
 
     def get_status_serailize(self):
