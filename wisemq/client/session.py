@@ -213,7 +213,7 @@ class Session:
                             status_obj.value = 0 if status_obj.value else 1
                             # 调用回调函数
                             status_obj.call_func()
-                            break
+                            return True
         except:
             raise
 
