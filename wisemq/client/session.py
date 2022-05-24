@@ -27,7 +27,7 @@ class MQTTService:
         assert user, "请重新下载wiseai-config.json文件"
 
         self.username = user.get("username")
-        self.password = user.get("password")
+        self.password = user.get("passwd")
         assert self.username or self.password, "请重新下载wiseai-config.json文件"
 
         self._dataset = dataset
