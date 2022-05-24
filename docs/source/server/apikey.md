@@ -1,4 +1,4 @@
-应用密钥APIKEY
+应用密钥
 =============
 ## 如何获取APIKEY?
 第三方网站如要使用WiseMQ必须要到官网进行申请并通过管理员审核后才能使用云端SDK。
@@ -6,7 +6,7 @@
 ![WiseMQ主页](./wisemq_index.png)
 
 登录后根据提示填写所创建应用的名称与介绍。
-![WiseMQ主页](./wisemq_application.png)
+![申请页面](./wisemq_application.png)
 > 注意：用户自身不能存在同名应用，介绍愈完善愈便于审核。
 
 申请通过后会获取到此应用的`APIKEY`，在接下来创建WiseMQ实例的时候传入APIKEY即可，SDK会自动将此APIKEY加入请求头进行验证。
