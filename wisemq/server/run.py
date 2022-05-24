@@ -116,17 +116,17 @@ class WiseMQInterface:
         url = URLS.get_user_info.value.format(token=user_token)
         return self._general_get_request(url)
 
-    def create_data_agent(self, user_token, data):
+    def create_data_agent(self, user_token, number_of_data):
         """Create Dataset for a user
 
         Args:
             user_token: Token when created MQTT User.
-            data: 
-                {"number_of_dataset": 1}
+            number_of_data: Nmuber of data that supposed to create.
         Returns:
             200, created dataset infomation.
 
         """
+        data = {"number_of_data": number_of_data}
         url = URLS.create_data_agent.value.format(token=user_token)
         url = self._return_url_per_environment(url)
         response = self._make_request(url, "post", data=data)
@@ -156,17 +156,25 @@ class WiseMQInterface:
         url = URLS.get_data_agent_info.value.format(token=user_token, data_pk=data_pk)
         return self._general_get_request(url)
 
-    def get_messages(self, user_token, data_pk):
+    def get_messages(self, user_token, data_pk, offset=None, limit=None):
         """Get MQTT message in Data
 
         Args:
             user_token: Token when created MQTT User.
             data_pk: Data model primary key.
+            offset: Offset for messages.
+            limit: Limited number of messages.
         Returns:
             200, message list.
 
         """
-        url = URLS.get_messages.value.format(token=user_token, data_pk=data_pk)
+        if not offset:
+            offset = 20
+
+        if not limit:
+            limit = 20
+
+        url = URLS.get_messages.value.format(token=user_token, data_pk=data_pk, offset=offset, limit=limit)
         return self._general_get_request(url)
 
     def update_status(self, user_token, data_pk, data):
