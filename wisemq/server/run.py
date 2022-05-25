@@ -169,7 +169,7 @@ class WiseMQInterface:
 
         """
         if not offset:
-            offset = 20
+            offset = 0
 
         if not limit:
             limit = 20
