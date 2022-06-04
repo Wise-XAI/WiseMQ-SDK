@@ -4,7 +4,7 @@
 - class Dataset
 """
 import abc
-from queue import PriorityQueue, Empty
+from queue import Queue, Empty
 from typing import List, Dict
 
 
@@ -71,7 +71,7 @@ class Data:
         self._id = id
         self._broker = None
         # self.hidden = False
-        self.candidate_queue = PriorityQueue(maxsize=queue_size)  # 排队等待上传队列
+        self.candidate_queue = Queue(maxsize=queue_size)  # 排队等待上传队列
         self.step = 0  # 记录执行步骤
 
     @property

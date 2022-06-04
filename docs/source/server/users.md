@@ -1,6 +1,6 @@
 用户
 =============
-WiseMQ致力于隔离并保护用户隐私，因此第三方网站无需提供任何用户信息与WiseMQ进行对接，两者通过唯一的凭证进行关联，你可以创建一张表与原本的用户表进行一对一关联，然后定义字段`wisemq_token`在此自动生成用户的凭证，通过此凭证与WiseMQ进行交互创建WiseMQ用户，而之后有关此用户的所有请求均通过此凭证进行交互。
+WiseAgent致力于隔离并保护用户隐私，因此第三方网站无需提供任何用户信息与WiseMQ进行对接，两者通过唯一的凭证进行关联，你可以创建一张表与原本的用户表进行一对一关联，然后定义字段`wisemq_token`在此自动生成用户的凭证，通过此凭证与WiseAgent进行交互创建WiseAgent用户，而之后有关此用户的所有请求均通过此凭证进行交互。
 
 ## 1. 创建用户：`create_wisemq_user`
 `create_wisemq_user`方法接收`token`参数进行交互，`token`为网站自定义的用户凭证，
@@ -9,7 +9,7 @@ WiseMQ致力于隔离并保护用户隐私，因此第三方网站无需提供�
 ### 使用样例
 ```python
 import os
-# 获取APIKEY与WiseMQ服务地址
+# 获取APIKEY与WiseAgent服务地址
 APIKEY = os.environ.get("APIKEY")
 WiseMQServer = os.environ.get("WiseMQServer")
 # 实例化交互对象

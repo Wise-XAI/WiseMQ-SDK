@@ -24,23 +24,24 @@ class TData(Data):
     }
 
     def capture_data(self):
-        number = 0
+        number = 323
         while True:
             try:
                 number += 1
                 data = {
                     "name": "test",
-                    "data1": "111111",
+                    "data1": "GOOD",
                     "data2": "NOT BAD",
                 }
                 self.candidate_queue.put(data)
                 self.set_status("status1", str(number))
+                self.set_status("status2", str(number - 232))
                 time.sleep(5)  # 0.5s获取数据
             except Exception as e:
                 print(e)
                 raise e
-# 创建      
-data1 = TData(id="fc2acc09a52a43fca34fc5a45ad195fe")
+# 创建
+data1 = TData(id="f38138ff179a4aee816e926460cc83c1")
 # data2 = TData(id="fa2052d7c67f48958977e65b1bca1770")
 
 session1 = Session("/home/dongbox/work/wisemq_sdk/wisemq-config.json")

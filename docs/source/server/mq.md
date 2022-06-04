@@ -8,7 +8,7 @@
 ### 使用样例
 ```python
 import os
-# 获取APIKEY与WiseMQ服务地址
+# 获取APIKEY与WiseAgent服务地址
 APIKEY = os.environ.get("APIKEY")
 WiseMQServer = os.environ.get("WiseMQServer")
 # 实例化交互对象

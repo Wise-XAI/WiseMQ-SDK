@@ -22,7 +22,7 @@ from recommonmark.parser import CommonMarkParser
 # source_suffix = ['.rst', '.md']
 # -- Project information -----------------------------------------------------
 
-project = 'WiseMQ SDK'
+project = 'WiseAgent SDK'
 copyright = '2022, Dongbox'
 author = 'Dongbox'
 
