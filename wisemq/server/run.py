@@ -25,7 +25,7 @@ class WiseMQInterface:
         headers = {"ApplicationKey": self.APIKEY}
         return headers
 
-    def _make_request(self, url, method, data=None):
+    def _make_request(self, url, method, data=None, json=None):
         """Function to make request to WiseMQ interface
 
         Args:
@@ -39,12 +39,13 @@ class WiseMQInterface:
         headers = self._get_request_headers()
         try:
             response = requests.request(
-                method=method, url=url, headers=headers, data=data
+                method=method, url=url, headers=headers, data=data, json=json
             )
             response.raise_for_status()
         except requests.exceptions.RequestException:
+            print(response.json())
             logger.info("The server isn't able establish connection with WiseMQ")
-            raise
+            raise requests.exceptions.RequestException
         return response.json()
 
     def _return_url_per_environment(self, url):
@@ -177,18 +178,18 @@ class WiseMQInterface:
         url = URLS.get_messages.value.format(token=user_token, data_pk=data_pk, offset=offset, limit=limit)
         return self._general_get_request(url)
 
-    def update_status(self, user_token, data_pk, data):
+    def update_status(self, user_token, agent, json):
         """Command that control corresponding client session. 
 
         Args:
             - user_token: Token when created MQTT User.
-            - data_pk: Data model primary key.
+            - agent: agent.
             - data: status name, which the type is switch.
         Returns:
             200, updated extra information
 
         """
-        url = URLS.update_status.value.format(token=user_token, data_pk=data_pk)
+        url = URLS.update_status.value.format(token=user_token, agent=agent)
         url = self._return_url_per_environment(url)
-        response = self._make_request(url, "PATCH", data=data)
+        response = self._make_request(url, "PATCH", json=json)
         return response

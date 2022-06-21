@@ -12,7 +12,7 @@ class URLS(Enum):
     get_data_agent_list = "/api/v1/mq/{token}/get_data_agent_list"
     get_data_agent_info = "/api/v1/mq/{token}/data/{data_pk}/get_info"
     get_messages = "/api/v1/mq/{token}/data/{data_pk}/get_messages?offset={offset}&limit={limit}"
-    update_status = "/api/v1/mq/{token}/data/{data_pk}/update_status"
+    update_status = "/api/v1/mq/{token}/data/{agent}/update_status"
 
 
 

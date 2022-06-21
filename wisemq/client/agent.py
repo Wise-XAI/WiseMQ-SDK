@@ -12,11 +12,15 @@ class Status:
     """控制方法"""
     SWITCH = "switch"
     ONLY_SHOW = "only_show"
-
+    SIGNAL = "signal"
+    
     def __init__(self, type=None, value=0, call_func=None):
         self._type = type or self.ONLY_SHOW
-        self._value = value  # show的时候为string格式，switch的时候则为0、1
-        self._call_func = call_func
+        self._value = value  # show的时候为string格式，switch的时候则为0、1，signal时为特定值并提供控制
+        if not call_func:
+            self._call_func = lambda : None
+        else:
+            self._call_func = call_func
 
     def is_switch(self):
         self._type = self.SWITCH
@@ -35,7 +39,7 @@ class Status:
     @value.setter
     def value(self, v):
         # 开关类型
-        if self._type == self.SWITCH and not (v == 0 or v == 1):
+        if self._type == self.SWITCH and v not in [0, 1]:
             raise ValueError("value格式错误!, 程序中止！！！")
         # 显示类型
         if self._type == self.ONLY_SHOW and not isinstance(v, str):
@@ -52,7 +56,7 @@ class Status:
 
     def validate(self):
         # 类型
-        assert self._type == self.ONLY_SHOW or self._type == self.SWITCH, f"{self.name}中类型设置错误"
+        assert self._type == self.ONLY_SHOW or self._type == self.SWITCH or self._type == self.SIGNAL, f"{self.name}中类型设置错误"
         if self._type == self.SWITCH: 
             assert self._value == 0 or self._value == 1, f"智能体类型为SWITCH时, value必须为0 | 1"
             assert self._call_func, f"智能体类型为SWITCH时, 必须设置回调函数进行相应操作"

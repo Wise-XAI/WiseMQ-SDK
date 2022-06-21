@@ -193,14 +193,18 @@ class Session:
     def process_sys_control(self, msg):
         """控制方法
 
-        msg: ["status1"]
+        msg: [{"status1": "value"}]
+        # 将智能体控制传递进去，那能不能添加一个有参数的设置呢，同信号函数一样传递特定参数而不是一个状态值
+        # 比如添加一个类型signal, 然后就是跟新此状态的唯一的参数值
 
         """
         # 传递string
         # ({data_id}, {status_name})
         try:
             update_status = json.loads(msg.payload.decode())
-            for data_id, update_status_name in update_status.items():
+            for data_id, update_status in update_status.items():
+                update_status_name = update_status[0]
+                update_status_value = update_status[1]
                 for data in self.dataset:
                     # 只能对SWITCH产生作用
                     if data.id != data_id:
@@ -208,11 +212,14 @@ class Session:
                     # 更新状态
                     for status_name, status_obj in data.statuses.items():
                         # 查询
-                        if update_status_name == status_name and status_obj.type == Status.SWITCH:
+                        if update_status_name == status_name and (status_obj.type == Status.SWITCH or status_obj.type == Status.SIGNAL):
                             # 切换
-                            status_obj.value = 0 if status_obj.value else 1
+                            status_obj.value = update_status_value
                             # 调用回调函数
-                            status_obj.call_func()
+                            if status_obj.type == Status.SIGNAL:
+                                status_obj.call_func(update_status_value)
+                            else:
+                                status_obj.call_func(update_status_value)
                             return True
         except:
             raise
