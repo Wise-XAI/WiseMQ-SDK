@@ -1,2 +1,4 @@
+# Client
 paho-mqtt==1.6.1
+# Server
 requests==2.27.1

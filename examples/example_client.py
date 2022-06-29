@@ -1,10 +1,15 @@
 import time
+import datetime
+# dev
+# import sys
+# sys.path.append('/home/dongbox/work/WiseMQ-SDK/')
 
 from wisemq.client import Session
 from wisemq.client import Data, Status
-import datetime
 
-def call_func_for_status_2():
+
+def call_func_for_status_2(data):
+    print(f"Processing for status 3...: 当前接受到参数： {data}.")
     print("Process for status 2...")
     time.sleep(1)
 
@@ -25,7 +30,7 @@ class TData(Data):
     }
 
     def capture_data(self):
-        number = 323
+        number = 1
         while True:
             try:
                 number += 1
@@ -42,10 +47,10 @@ class TData(Data):
                 print(e)
                 raise e
 # 创建
-data1 = TData(id="162bcc2d0f6340c5938535071d3645ab")
+data1 = TData(id="a0d9dc3af75c47029a1784b4fd56cd16")
 # data2 = TData(id="fa2052d7c67f48958977e65b1bca1770")
 
-session1 = Session("/home/dongbox/work/wisemq_sdk/wisemq-config.json")
+session1 = Session()
 session1.commit(data1)
 # session1.commit(data2)
 session1.run()

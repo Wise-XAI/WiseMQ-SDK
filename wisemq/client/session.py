@@ -154,18 +154,22 @@ class Session:
 
     def _validate_config(self):
         """读取配置文件"""
-        with open(self.config_path, 'r') as f:
-            context = f.read()
+        try:
+            with open(self.config_path, 'r') as f:
+                context = f.read()
+        except FileNotFoundError:
+            raise FileNotFoundError("查询不到配置文件，请申请并下载wisemq-config.json文件!!!")
+
         try:
             data = json.loads(context)
             return data
         except:
-            raise json.JSONDecodeError("请重新下载wisemq-config.json文件")
+            raise json.JSONDecodeError("格式错误，请重新下载wisemq-config.json文件!!!")
 
     def _validate_broker(self):
         """校验dataset并添加到列表中"""
         dataset = self._config_data.get("dataset")
-        assert dataset, "请重新下载wisemq-config.json文件"
+        assert dataset, "格式错误，请重新下载wisemq-config.json文件!!!"
         data_dict = dict()
 
         for ds in dataset:
