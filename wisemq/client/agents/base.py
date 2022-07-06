@@ -1,12 +1,12 @@
 """
 数据统一格式
-- class Data
-- class Dataset
+- class Agent
 """
 import abc
+import json
 from queue import Queue, Empty
 from typing import List, Dict
-
+from concurrent.futures import ThreadPoolExecutor
 
 class Status:
     """控制方法"""
@@ -55,7 +55,7 @@ class Status:
         self._call_func = v
 
     def validate(self):
-        # 类型
+        """定义当前Status的状态校验方法"""
         assert self._type == self.ONLY_SHOW or self._type == self.SWITCH or self._type == self.SIGNAL, f"{self.name}中类型设置错误"
         if self._type == self.SWITCH: 
             assert self._value == 0 or self._value == 1, f"智能体类型为SWITCH时, value必须为0 | 1"
@@ -63,32 +63,66 @@ class Status:
         return True
         
 
-class Data:
+class Agent:
     """
-        数据的基本单位
+        Agent的基本单位
         其中需要定义获取方法以及其基本信息
     """
     _repr_indent = 4
     statuses: Dict[str, Status] = dict()
 
-    def __init__(self, id: str, queue_size: int = 100):
-        self._id = id
-        self._broker = None
-        # self.hidden = False
+
+
+    def __init__(self, config_path, queue_size: int = 100):
+        self.config_path = config_path
+        # 配置文件
+        self._config_data = self._validate_config()
+        self._id = self._config_data.get("agent")["name"]
+        self._brokers = self._validate_broker()
+
         self.candidate_queue = Queue(maxsize=queue_size)  # 排队等待上传队列
         self.step = 0  # 记录执行步骤
+        self._stop = False
+        self.task_pool = ThreadPoolExecutor(5)
+
+    # -----------------字符输出函数-----------------
+
+    def extra_repr(self) -> str:
+        return ""
+
+    def __repr__(self) -> str:
+        head = "Data " + self.name
+        body = self.extra_repr().splitlines()
+        lines = [head] + [" " * self._repr_indent + line for line in body]
+        return "\n".join(lines)
+
+    def _validate_config(self):
+        """读取配置文件，确认配置文件地址存在否则抛出异常"""
+        try:
+            with open(self.config_path, 'r') as f:
+                context = f.read()
+        except FileNotFoundError:
+            raise FileNotFoundError("查询不到配置文件，请申请并下载wisemq-config.json文件!!!")
+
+        try:
+            data = json.loads(context)
+            return data
+        except:
+            raise json.JSONDecodeError("格式错误，请重新下载wisemq-config.json文件!!!")
+
+    def _validate_broker(self):
+        """校验data并添加其中的broker到字典中"""
+        agent = self._config_data.get("agent")
+        assert agent, "格式错误，请重新下载wisemq-config.json文件!!!"
+        broker_dict = {
+            "host": agent["broker"]["host"], 
+            "port": agent["broker"]["port"]
+        }
+        return broker_dict
 
     @property
     def id(self) -> str:
         return self._id
-
-    @property
-    def broker(self) -> str:
-        return self._broker
-
-    @broker.setter
-    def broker(self, value):
-        self._broker = value
         
     @abc.abstractmethod
     def capture_data(self):
@@ -133,13 +167,15 @@ class Data:
                 "type": status_obj.type
             }
         return serialize_data
-    # -----------------字符输出函数-----------------
 
-    def extra_repr(self) -> str:
-        return ""
 
-    def __repr__(self) -> str:
-        head = "Data " + self.name
-        body = self.extra_repr().splitlines()
-        lines = [head] + [" " * self._repr_indent + line for line in body]
-        return "\n".join(lines)
+    def _start_data_capture(self):
+        """Start function capture in all Data."""
+        self.task_pool.submit(self.capture_data)
+
+    @abc.abstractmethod
+    def run(self):
+        """主函数"""
+
+    def close(self):
+        self._stop = True
