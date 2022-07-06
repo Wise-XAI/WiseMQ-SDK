@@ -55,10 +55,8 @@ class MQTTAgent(Agent):
         while not self._stop:
             msg = self.iter()
             status_serailizer = self.get_status_serailize()
-            if msg:
-                self.mqtt_connector.publish_data(self.id, msg, status_serailizer)
-            else:
-                time.sleep(0.1)
+            self.mqtt_connector.publish_data(self.id, msg, status_serailizer)
+            time.sleep(0.1)
 
         logger.info("中止Agent运行")
         

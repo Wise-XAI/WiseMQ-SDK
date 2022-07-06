@@ -135,15 +135,15 @@ class MQTTConnector:
             else:
                 logger.info(f"Failed to send message to topic {target_agent_topic}")
 
-            # 上传状态
-            target_agent_sys_topic = self._generate_agent_sys_name(agent_id)
-            result = self._client.publish(target_agent_sys_topic, json.dumps(statuses))
-            status = result[0]
-            if status == 0:
-                logger.info(f"Published {agent_id}' status to Topic:{target_agent_sys_topic}")
-            else:
-                logger.info(f"Failed to send message to topic {target_agent_sys_topic}")
-        time.sleep(1)
+        # 正常上传状态信息
+        target_agent_sys_topic = self._generate_agent_sys_name(agent_id)
+        result = self._client.publish(target_agent_sys_topic, json.dumps(statuses))
+        status = result[0]
+        if status == 0:
+            logger.info(f"Published {agent_id}' status to Topic:{target_agent_sys_topic}")
+        else:
+            logger.info(f"Failed to send message to topic {target_agent_sys_topic}")
+        time.sleep(0.5)
 
     def close(self):
         self._client.loop_stop(force=True)
