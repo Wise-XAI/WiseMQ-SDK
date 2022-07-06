@@ -86,15 +86,16 @@ class WiseMQInterface:
         response = self._make_request(url, "post", data=data)
         return response
 
-    def get_client_config_file(self, user_token):
+    def get_client_config_file(self, user_token, agent):
         """Get User Config FILE
 
         Args:
             user_token: Token when created MQTT User.
+            agent: Agent KEY.
         Returns:
             File Download
         """
-        url = URLS.get_client_config_file.value.format(token=user_token)
+        url = URLS.get_client_config_file.value.format(token=user_token, agent=agent)
         url = self._return_url_per_environment(url)
 
         headers = self._get_request_headers()
@@ -104,10 +105,11 @@ class WiseMQInterface:
             )
             response.raise_for_status()
         except requests.exceptions.RequestException:
-            logger.info(response.json())
-            logger.error("The server isn't able establish connection with WiseMQ")
-            # raise requests.exceptions.RequestException(response.json())
-            response
+            try:
+                logger.info(response.json())
+                logger.error("The server isn't able establish connection with WiseMQ")
+            except:
+                raise requests.exceptions.RequestException(response.json())
         return response
 
     def get_user_info(self, user_token):
@@ -149,20 +151,19 @@ class WiseMQInterface:
         url = URLS.get_data_agent_list.value.format(token=user_token)
         return self._general_get_request(url)
 
-    def get_data_agent_info(self, user_token, data_name):
+    def get_data_agent_info(self, user_token, agent):
         """Get Single Data Information.
 
         Args:
             user_token: Token when created MQTT User.
-            data_name: Data model primary name.
+            agent: Agent model primary name.
         Returns:
-            200, dataset info.
+            200
         """
-        url = URLS.get_data_agent_info.value.format(token=user_token, data_name=data_name)
-        print(url)
+        url = URLS.get_data_agent_info.value.format(token=user_token, agent=agent)
         return self._general_get_request(url)
 
-    def get_messages(self, user_token, data_name, offset=None, limit=None):
+    def get_messages(self, user_token, agent, offset=None, limit=None):
         """Get MQTT message in Data
 
         Args:
@@ -180,7 +181,7 @@ class WiseMQInterface:
         if not limit:
             limit = 20
 
-        url = URLS.get_messages.value.format(token=user_token, data_name=data_name, offset=offset, limit=limit)
+        url = URLS.get_messages.value.format(token=user_token, agent=agent, offset=offset, limit=limit)
         return self._general_get_request(url)
 
     def update_status(self, user_token, agent, json):
@@ -189,7 +190,7 @@ class WiseMQInterface:
         Args:
             - user_token: Token when created MQTT User.
             - agent: agent.
-            - data: status name, which the type is switch.
+            - json: status name, which the type is switch.
         Returns:
             200, updated extra information
 
