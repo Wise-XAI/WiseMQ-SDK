@@ -47,6 +47,8 @@ class WiseMQInterface:
                 logger.info(response.json())
                 logger.error("The server isn't able establish connection with WiseMQ")
             except:
+                pass
+            finally:
                 raise requests.exceptions.RequestException
         return response.json()
 

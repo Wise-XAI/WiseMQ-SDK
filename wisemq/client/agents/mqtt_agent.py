@@ -5,6 +5,8 @@ from .. config import logger
 from .. connectors import MQTTConnector
 
 class MQTTAgent(Agent):
+    OFFLINE_TIME_STATUS = Status(60)
+
     def __init__(self, config_path="./wisemq-config.json", queue_size: int = 100):
         super().__init__(config_path, queue_size)
 
@@ -40,6 +42,7 @@ class MQTTAgent(Agent):
     def run(self):
         logger.info("进入主程序...")
         # 用户名默认与密码一致
+        self.statuses["offline_time"] = self.OFFLINE_TIME_STATUS
         self.mqtt_connector = MQTTConnector(
             username=self._config_data["user"], 
             password=self._config_data["user"], 

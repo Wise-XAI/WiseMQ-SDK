@@ -14,7 +14,7 @@ class Status:
     ONLY_SHOW = "only_show"
     SIGNAL = "signal"
     
-    def __init__(self, type=None, value=0, call_func=None):
+    def __init__(self, value=0, type=None, call_func=None):
         self._type = type or self.ONLY_SHOW
         self._value = value  # show的时候为string格式，switch的时候则为0、1，signal时为特定值并提供控制
         if not call_func:

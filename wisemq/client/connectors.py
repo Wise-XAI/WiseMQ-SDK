@@ -8,6 +8,8 @@ from paho.mqtt import client as mqtt_client
 
 from .config import logger
 
+
+
 RESULT_CODES = {
     1: "incorrect protocol version",
     2: "invalid client identifier",
@@ -16,6 +18,9 @@ RESULT_CODES = {
     5: "not authorised",
 }
 
+def get_random_str():
+    import uuid
+    return str(uuid.uuid4()).replace("-", "")
 
 class MQTTConnector:
     def __init__(self, username:str=None, password: str=None, host="localhost", port=1883):
@@ -24,7 +29,8 @@ class MQTTConnector:
         Args:
 
         """
-        client_id = f'Client_{username}' if username else f'MQTT_CLIENT_FOR_TEST'
+        random_str = get_random_str()
+        client_id = f'Client_{username}-{random_str}' if username else f'MQTT_CLIENT_FOR_TEST'
         self._client = mqtt_client.Client(client_id)
 
         self.__host = host
