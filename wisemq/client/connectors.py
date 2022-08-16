@@ -117,36 +117,38 @@ class MQTTConnector:
         """订阅系统消息"""
         self.agent_callback_func = call_func
         self._client.subscribe(self.sys_topic)
+        # print("system: ", self.sys_topic)
         logger.info("Subscribed $SYS...")
 
-    def _generate_agent_topic_name(self, agent_id: str):
+    def _generate_agent_topic_name(self):
         """生成主题名字"""
-        return f'/{self.username}/{agent_id}'
+        return f'/{self.username}'
 
-    def _generate_agent_sys_name(self, agent_id: str):
-        """生成Agent的控制主题"""
-        return f'/{self.username}/{agent_id}/$SYS'
+    def _generate_agent_sys_name(self):
+        """生成Agent的状态主题"""
+        return f'/{self.username}/STATUS'
 
-    def publish_data(self, agent_id: str, msg: dict, statuses: dict):
+    def publish_data(self, msg: dict, statuses: dict):
         """根据topic信息进行推送
 
         :return:
         """
         if msg:
-            target_agent_topic = self._generate_agent_topic_name(agent_id)
+            target_agent_topic = self._generate_agent_topic_name()
             result = self._client.publish(target_agent_topic, json.dumps(msg))
             status = result[0]
             if status == 0:
-                logger.info(f"Published {agent_id}' content to Topic:{target_agent_topic}")
+                logger.info(f"Published content to Topic:{target_agent_topic}")
             else:
                 logger.info(f"Failed to send message to topic {target_agent_topic}")
-
+            # print(target_agent_topic)
         # 正常上传状态信息
-        target_agent_sys_topic = self._generate_agent_sys_name(agent_id)
+        target_agent_sys_topic = self._generate_agent_sys_name()
+        # print(target_agent_sys_topic)
         result = self._client.publish(target_agent_sys_topic, json.dumps(statuses))
         status = result[0]
         if status == 0:
-            logger.info(f"Published {agent_id}' status to Topic:{target_agent_sys_topic}")
+            logger.info(f"Published status to Topic:{target_agent_sys_topic}")
         else:
             logger.info(f"Failed to send message to topic {target_agent_sys_topic}")
         time.sleep(0.5)

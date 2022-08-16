@@ -44,8 +44,8 @@ class MQTTAgent(Agent):
         # 用户名默认与密码一致
         self.statuses["offline_time"] = self.OFFLINE_TIME_STATUS
         self.mqtt_connector = MQTTConnector(
-            username=self._config_data["user"], 
-            password=self._config_data["user"], 
+            username=self.id, 
+            password=self.id, 
             host=self._brokers["host"], 
             port=self._brokers["port"]
             )
@@ -58,7 +58,7 @@ class MQTTAgent(Agent):
         while not self._stop:
             msg = self.iter()
             status_serailizer = self.get_status_serailize()
-            self.mqtt_connector.publish_data(self.id, msg, status_serailizer)
+            self.mqtt_connector.publish_data(msg, status_serailizer)
             time.sleep(0.1)
 
         logger.info("中止Agent运行")

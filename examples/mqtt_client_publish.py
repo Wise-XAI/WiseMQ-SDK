@@ -1,5 +1,6 @@
 import time
 import datetime
+import logging
 # dev
 import sys
 sys.path.append('/home/dongbox/work/WiseMQ-SDK/')
@@ -7,9 +8,32 @@ sys.path.append('/home/dongbox/work/WiseMQ-SDK/')
 from wisemq.client import Status, MQTTAgent
 from queue import Full
 
+logger = logging.getLogger("[CLIENT]")
+# logger.setLevel(level=logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+# logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+#                     level=logging.DEBUG,
+#                     filename='output.log',
+#                     filemode='w')
+
+file_handler = logging.FileHandler('worker.log')
+file_handler.setLevel(level=logging.DEBUG)
+# file_handler.setFormatter(formatter)
+
+stream_handler = logging.StreamHandler()
+# stream_handler.setFormatter(formatter)
+file_handler.setLevel(level=logging.INFO)
+
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
+
+
+
+
 def call_func_for_status_2(data):
-    print(f"Processing for status 3...: 当前接受到参数： {data}.")
-    print("Process for status 2...")
+    logger.info(f"Processing for status 3...: 当前接受到参数： {data}.")
+    logger.info("Process for status 2...")
     time.sleep(1)
 
 
@@ -17,19 +41,17 @@ cur_status = "online"
 
 def call_func_for_status_3(data):
     global cur_status
-    print(data)
+    # print(data)
     if data == "reload_lastest":
-        print("执行上一个")
+        logger.info("执行上一个")
         cur_status = "process"
     elif data != "pause":
         # cur_status = "download"
-        print("接收到SIGNAL指令")
-        print(f"Processing for status 3...: 当前请求地址为： {data}.")
-        print("保存为状态记录")
+        logger.info("接收到SIGNAL指令")
+        logger.info(f"Processing for status 3...: 当前请求地址为： {data}.")
+        logger.info("保存为状态记录")
         time.sleep(5)
         cur_status = "failed"
-        
-        # cur_status = "process"
     else:
         cur_status = "online"
 
@@ -63,13 +85,13 @@ class MyMQTTAgent(MQTTAgent):
                 elif cur_status == "failed":
                     self.set_status("current_feedback", "failed")
 
-                print(cur_status)
+                # print(cur_status)
                 self.candidate_queue.put_nowait(data)
-                time.sleep(.1)  # 0.5s获取数据
-
+                time.sleep(1)  # 0.5s获取数据
             except Full:
                 time.sleep(.2)  # 0.5s获取数据
-
+            except Exception as e:
+                logger.exception(e)
 # 创建
 my_agent = MyMQTTAgent()
 my_agent.run()

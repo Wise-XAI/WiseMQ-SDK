@@ -77,7 +77,7 @@ class Agent:
         self.config_path = config_path
         # 配置文件
         self._config_data = self._validate_config()
-        self._id = self._config_data.get("agent")["name"]
+        self._id = self._config_data.get("agent")
         self._brokers = self._validate_broker()
 
         self.candidate_queue = Queue(maxsize=queue_size)  # 排队等待上传队列
@@ -112,11 +112,11 @@ class Agent:
 
     def _validate_broker(self):
         """校验data并添加其中的broker到字典中"""
-        agent = self._config_data.get("agent")
-        assert agent, "格式错误，请重新下载wisemq-config.json文件!!!"
+        broker = self._config_data.get("broker")
+        assert broker, "格式错误，请重新下载wisemq-config.json文件!!!"
         broker_dict = {
-            "host": agent["broker"]["host"], 
-            "port": agent["broker"]["port"]
+            "host": broker["host"], 
+            "port": broker["port"]
         }
         return broker_dict
 
