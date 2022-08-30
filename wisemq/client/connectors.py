@@ -37,7 +37,7 @@ class MQTTConnector:
         self.__port = port
         self._client.username_pw_set(username, password)
         # self._client = self.create_mqtt_client(client_id, host, port)
-        self.sys_topic = f"/{username}/$SYS"
+        self.sys_topic = f"/wisemq/v1/{username}/$SYS"
         self.username = username
         self._client.on_connect = self._on_connect
         self._client.on_log = self._on_log
@@ -120,22 +120,27 @@ class MQTTConnector:
         # print("system: ", self.sys_topic)
         logger.info("Subscribed $SYS...")
 
-    def _generate_agent_topic_name(self):
+    def _generate_agent_data_topic_name(self):
         """生成主题名字"""
-        return f'/{self.username}'
+        return '/wisemq/v1/data'
 
-    def _generate_agent_sys_name(self):
+    def _generate_agent_status_topic_name(self):
         """生成Agent的状态主题"""
-        return f'/{self.username}/STATUS'
+        return '/wisemq/v1/status'
 
+    def _generate_agent_key(self, content):
+        """添加agent_key"""
+        content["wisemq_agent_key"] = self.username
+        return json.dumps(content)
+           
     def publish_data(self, msg: dict, statuses: dict):
         """根据topic信息进行推送
 
         :return:
         """
         if msg:
-            target_agent_topic = self._generate_agent_topic_name()
-            result = self._client.publish(target_agent_topic, json.dumps(msg))
+            target_agent_topic = self._generate_agent_data_topic_name()
+            result = self._client.publish(target_agent_topic, self._generate_agent_key(msg))
             status = result[0]
             if status == 0:
                 logger.info(f"Published content to Topic:{target_agent_topic}")
@@ -143,9 +148,9 @@ class MQTTConnector:
                 logger.info(f"Failed to send message to topic {target_agent_topic}")
             # print(target_agent_topic)
         # 正常上传状态信息
-        target_agent_sys_topic = self._generate_agent_sys_name()
+        target_agent_sys_topic = self._generate_agent_status_topic_name()
         # print(target_agent_sys_topic)
-        result = self._client.publish(target_agent_sys_topic, json.dumps(statuses))
+        result = self._client.publish(target_agent_sys_topic, self._generate_agent_key(statuses))
         status = result[0]
         if status == 0:
             logger.info(f"Published status to Topic:{target_agent_sys_topic}")
