@@ -5,7 +5,7 @@ from .utils.config import logger, WISEMQ_API_SERVER
 
 
 class WiseMQInterface:
-    def __init__(self, APIKEY, WISEMQ_API_SERVER=WISEMQ_API_SERVER):
+    def __init__(self, TOKEN, WISEMQ_API_SERVER=WISEMQ_API_SERVER):
         """Class to initiate call to WiseMQ backend
 
         Arguments:
@@ -13,7 +13,7 @@ class WiseMQInterface:
             WISEMQ_API_SERVER {[string]} -- It should be set to https://wisemq.wise-xai.com # For production server
         """
 
-        self.APIKEY = APIKEY
+        self.TOKEN = TOKEN
         self.WISEMQ_API_SERVER = WISEMQ_API_SERVER
 
     def _get_request_headers(self):
@@ -22,7 +22,7 @@ class WiseMQInterface:
         Returns:
             [dict]: Authorization header
         """
-        headers = {"ApplicationKey": self.APIKEY}
+        headers = {"Authorization": "Bearer " + self.TOKEN}
         return headers
 
     def _make_request(self, url, method, data=None, json=None):
@@ -71,133 +71,39 @@ class WiseMQInterface:
         response = self._make_request(url, "GET")
         return response
 
-    def create_wisemq_user(self, data):
-        """
-        Args:
-            data ([dict]): User Data to be created
-            data: {
-                "user_token": "APIKEY"
+    def get_user_device_list(self):
+        """获取用户设备列表"""
+
+        url = URLS.get_user_device_list.value
+        return self._general_get_request(url)
+    
+    def get_device_status(self, device_id):
+        """获取单个设备信息"""
+
+        url = URLS.get_device_status.value.format(device_id=device_id)
+        return self._general_get_request(url)
+
+    def update_status(self, device_id, name, value):
+        """更新状态"""
+
+        url = URLS.update_status.value.format(device_id=device_id)
+        url = self._return_url_per_environment(url)
+        json_data = {
+            "update_status": {
+                "name": name,
+                "value": value
             }
-            The necessary key is `user_token`
-
-        Returns:
-            [JSON]: JSON response data
-        """
-        url = URLS.create_wisemq_user.value
-        url = self._return_url_per_environment(url)
-        response = self._make_request(url, "post", data=data)
+        }
+        response = self._make_request(url, "PUT", json=json_data)
         return response
 
-    def get_client_config_file(self, user_token, agent):
-        """Get User Config FILE
+    def update_device_name(self, device_id, new_name):
+        """更新设备名称"""
 
-        Args:
-            user_token: Token when created MQTT User.
-            agent: Agent KEY.
-        Returns:
-            File Download
-        """
-        url = URLS.get_client_config_file.value.format(token=user_token, agent=agent)
+        url = URLS.update_device_name.value.format(device_id=device_id)
         url = self._return_url_per_environment(url)
-
-        headers = self._get_request_headers()
-        try:
-            response = requests.request(
-                method="GET", url=url, headers=headers
-            )
-            response.raise_for_status()
-        except requests.exceptions.RequestException:
-            try:
-                logger.info(response.json())
-                logger.error("The server isn't able establish connection with WiseMQ")
-            except:
-                raise requests.exceptions.RequestException(response.json())
-        return response
-
-    def get_user_info(self, user_token):
-        """Get User Info
-
-        Args:
-            user_token: Token when created MQTT User.
-        Returns:
-            User Information
-        """
-        url = URLS.get_user_info.value.format(token=user_token)
-        return self._general_get_request(url)
-
-    def create_data_agent(self, user_token, number_of_data):
-        """Create Dataset for a user
-
-        Args:
-            user_token: Token when created MQTT User.
-            number_of_data: Nmuber of data that supposed to create.
-        Returns:
-            200, created dataset infomation.
-
-        """
-        data = {"number_of_data": number_of_data}
-        url = URLS.create_data_agent.value.format(token=user_token)
-        url = self._return_url_per_environment(url)
-        response = self._make_request(url, "post", data=data)
-        return response
-
-    def get_data_agent_list(self, user_token):
-        """Get Dataset List for a user
-
-        Args:
-            user_token: Token when created MQTT User.
-        Returns:
-            200, dataset list.
-
-        """
-        url = URLS.get_data_agent_list.value.format(token=user_token)
-        return self._general_get_request(url)
-
-    def get_data_agent_info(self, user_token, agent):
-        """Get Single Data Information.
-
-        Args:
-            user_token: Token when created MQTT User.
-            agent: Agent model primary name.
-        Returns:
-            200
-        """
-        url = URLS.get_data_agent_info.value.format(token=user_token, agent=agent)
-        return self._general_get_request(url)
-
-    def get_messages(self, user_token, agent, offset=None, limit=None):
-        """Get MQTT message in Data
-
-        Args:
-            user_token: Token when created MQTT User.
-            data_name: Data model primary name.
-            offset: Offset for messages.
-            limit: Limited number of messages.
-        Returns:
-            200, message list.
-
-        """
-        if not offset:
-            offset = 0
-
-        if not limit:
-            limit = 20
-
-        url = URLS.get_messages.value.format(token=user_token, agent=agent, offset=offset, limit=limit)
-        return self._general_get_request(url)
-
-    def update_status(self, user_token, agent, json):
-        """Command that control corresponding client session. 
-
-        Args:
-            - user_token: Token when created MQTT User.
-            - agent: agent.
-            - json: status name, which the type is switch.
-        Returns:
-            200, updated extra information
-
-        """
-        url = URLS.update_status.value.format(token=user_token, agent=agent)
-        url = self._return_url_per_environment(url)
-        response = self._make_request(url, "PATCH", json=json)
+        json_data = {
+            "new_device_name": new_name,
+        }
+        response = self._make_request(url, "PUT", json=json_data)
         return response
