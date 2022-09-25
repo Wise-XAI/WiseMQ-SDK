@@ -5,7 +5,7 @@ from .utils.config import logger, WISEMQ_API_SERVER
 
 
 class WiseMQInterface:
-    def __init__(self, WISEMQ_API_SERVER=WISEMQ_API_SERVER):
+    def __init__(self, WiseAPIKey, WISEMQ_API_SERVER=WISEMQ_API_SERVER):
         """Class to initiate call to WiseMQ backend
 
         Arguments:
@@ -13,6 +13,7 @@ class WiseMQInterface:
             WISEMQ_API_SERVER {[string]} -- It should be set to https://wisemq.wise-xai.com # For production server
         """
         self.TOKEN = str()
+        self.WiseAPIKey = WiseAPIKey
         self.WISEMQ_API_SERVER = WISEMQ_API_SERVER
 
     def _get_request_headers(self):
@@ -21,7 +22,7 @@ class WiseMQInterface:
         Returns:
             [dict]: Authorization header
         """
-        headers = {"Authorization": "Bearer " + self.TOKEN}
+        headers = {"WiseOpenAPI": f"{self.TOKEN}", "WiseApplicationKey": self.WiseAPIKey}
         return headers
 
     def _make_request(self, url, method, data=None, json=None):
@@ -72,8 +73,9 @@ class WiseMQInterface:
 
     def auth_token(self, token):
         """认证用户token"""
-        url = self._return_url_per_environment(URLS.auth_token.value)
-        response = self._make_request(url, "POST", json={"token": token})
+        url = self._return_url_per_environment(URLS.verify_openapi.value)
+        response = self._make_request(url, "POST", json={"openapi": token})
+        print(response)
         return response
 
     def refresh_token(self, token):
