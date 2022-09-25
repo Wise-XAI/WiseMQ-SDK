@@ -75,7 +75,6 @@ class WiseMQInterface:
         """认证用户token"""
         url = self._return_url_per_environment(URLS.verify_openapi.value)
         response = self._make_request(url, "POST", json={"openapi": token})
-        print(response)
         return response
 
     def refresh_token(self, token):
