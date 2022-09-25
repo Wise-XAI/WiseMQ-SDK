@@ -5,15 +5,14 @@ from .utils.config import logger, WISEMQ_API_SERVER
 
 
 class WiseMQInterface:
-    def __init__(self, TOKEN, WISEMQ_API_SERVER=WISEMQ_API_SERVER):
+    def __init__(self, WISEMQ_API_SERVER=WISEMQ_API_SERVER):
         """Class to initiate call to WiseMQ backend
 
         Arguments:
             APIKEY {[string]} -- The authentication token corresponding to WiseMQ
             WISEMQ_API_SERVER {[string]} -- It should be set to https://wisemq.wise-xai.com # For production server
         """
-
-        self.TOKEN = TOKEN
+        self.TOKEN = str()
         self.WISEMQ_API_SERVER = WISEMQ_API_SERVER
 
     def _get_request_headers(self):
@@ -46,11 +45,11 @@ class WiseMQInterface:
             try:
                 logger.info(response.json())
                 logger.error("The server isn't able establish connection with WiseMQ")
-            except:
-                pass
-            finally:
-                raise requests.exceptions.RequestException
-        return response.json()
+                return False, response.json()
+            except Exception as e:
+                return False, e
+                
+        return True, response.json()
 
     def _return_url_per_environment(self, url):
         """Function to get the URL for API
@@ -71,20 +70,53 @@ class WiseMQInterface:
         response = self._make_request(url, "GET")
         return response
 
-    def get_user_device_list(self):
-        """获取用户设备列表"""
+    def auth_token(self, token):
+        """认证用户token"""
+        url = self._return_url_per_environment(URLS.auth_token.value)
+        response = self._make_request(url, "POST", json={"token": token})
+        return response
 
-        url = URLS.get_user_device_list.value
-        return self._general_get_request(url)
+    def refresh_token(self, token):
+        """刷新用户token"""
+        url = self._return_url_per_environment(URLS.token_refresh.value)
+        response = self._make_request(url, "POST", json={"refresh": token})
+        return response
+
+    def auth_user(self, username, password):
+        """认证用户登录"""
+        url = self._return_url_per_environment(URLS.auth_user.value)
+        json_data = {
+            "username": username,
+            "password": password
+        }
+        response = self._make_request(url, "POST", json=json_data)
+        return response
+
+    def get_user_device_list(self, token, category=""):
+        """获取用户设备列表"""
+        self.TOKEN = token
+        return self._general_get_request(URLS.get_user_device_list.value.format(category))
     
-    def get_device_status(self, device_id):
+    def get_device_status(self, token, device_id):
         """获取单个设备信息"""
+        self.TOKEN = token
 
         url = URLS.get_device_status.value.format(device_id=device_id)
         return self._general_get_request(url)
 
-    def update_status(self, device_id, name, value):
+    def get_device_list_status(self, token, devices):
+        """获取用户设备列表"""
+        self.TOKEN = token
+        json_data = {
+            "devices": devices
+        }
+        url = self._return_url_per_environment(URLS.get_device_list_status.value)
+        response = self._make_request(url, "GET", json=json_data)
+        return response
+
+    def update_status(self, token, device_id, name, value):
         """更新状态"""
+        self.TOKEN = token
 
         url = URLS.update_status.value.format(device_id=device_id)
         url = self._return_url_per_environment(url)
@@ -97,9 +129,9 @@ class WiseMQInterface:
         response = self._make_request(url, "PUT", json=json_data)
         return response
 
-    def update_device_name(self, device_id, new_name):
+    def update_device_name(self, token, device_id, new_name):
         """更新设备名称"""
-
+        self.TOKEN = token
         url = URLS.update_device_name.value.format(device_id=device_id)
         url = self._return_url_per_environment(url)
         json_data = {

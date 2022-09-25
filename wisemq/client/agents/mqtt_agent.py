@@ -39,7 +39,7 @@ class MQTTAgent(Agent):
             logger.info(f"SYSTEM CONTROL ERROR: {e}")
             print(e)
 
-    def run(self):
+    def run(self, upload_time=0.1):
         logger.info("进入主程序...")
         # 用户名默认与密码一致
         self.statuses["offline_time"] = self.OFFLINE_TIME_STATUS
@@ -59,7 +59,7 @@ class MQTTAgent(Agent):
             msg = self.iter()
             status_serailizer = self.get_status_serailize()
             self.mqtt_connector.publish_data(msg, status_serailizer)
-            time.sleep(0.1)
+            time.sleep(upload_time)
 
         logger.info("中止Agent运行")
         
